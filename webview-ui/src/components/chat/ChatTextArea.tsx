@@ -31,6 +31,7 @@ interface ChatTextAreaProps {
 	onHeightChange?: (height: number) => void
 	mode: Mode
 	setMode: (value: Mode) => void
+	modeShortcutText: string
 }
 
 const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
@@ -48,6 +49,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			onHeightChange,
 			mode,
 			setMode,
+			modeShortcutText,
 		},
 		ref,
 	) => {
@@ -590,15 +592,36 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					const files = Array.from(e.dataTransfer.files)
 					const text = e.dataTransfer.getData("text")
 					if (text) {
-						// Convert the path to a mention-friendly format
-						const mentionText = convertToMentionPath(text, cwd)
+						// Split text on newlines to handle multiple files
+						const lines = text.split(/\r?\n/).filter((line) => line.trim() !== "")
 
-						const newValue =
-							inputValue.slice(0, cursorPosition) + mentionText + " " + inputValue.slice(cursorPosition)
-						setInputValue(newValue)
-						const newCursorPosition = cursorPosition + mentionText.length + 1
-						setCursorPosition(newCursorPosition)
-						setIntendedCursorPosition(newCursorPosition)
+						if (lines.length > 0) {
+							// Process each line as a separate file path
+							let newValue = inputValue.slice(0, cursorPosition)
+							let totalLength = 0
+
+							lines.forEach((line, index) => {
+								// Convert each path to a mention-friendly format
+								const mentionText = convertToMentionPath(line, cwd)
+								newValue += mentionText
+								totalLength += mentionText.length
+
+								// Add space after each mention except the last one
+								if (index < lines.length - 1) {
+									newValue += " "
+									totalLength += 1
+								}
+							})
+
+							// Add space after the last mention and append the rest of the input
+							newValue += " " + inputValue.slice(cursorPosition)
+							totalLength += 1
+
+							setInputValue(newValue)
+							const newCursorPosition = cursorPosition + totalLength
+							setCursorPosition(newCursorPosition)
+							setIntendedCursorPosition(newCursorPosition)
+						}
 						return
 					}
 
@@ -777,6 +800,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							<select
 								value={mode}
 								disabled={textAreaDisabled}
+								title="Select mode for interaction"
 								onChange={(e) => {
 									const value = e.target.value
 									if (value === "prompts-action") {
@@ -794,6 +818,11 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 									minWidth: "70px",
 									flex: "0 0 auto",
 								}}>
+								<option
+									disabled
+									style={{ ...optionStyle, fontStyle: "italic", opacity: 0.6, padding: "2px 8px" }}>
+									{modeShortcutText}
+								</option>
 								{getAllModes(customModes).map((mode) => (
 									<option key={mode.slug} value={mode.slug} style={{ ...optionStyle }}>
 										{mode.name}
@@ -828,6 +857,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							<select
 								value={currentApiConfigName || ""}
 								disabled={textAreaDisabled}
+								title="Select API configuration"
 								onChange={(e) => {
 									const value = e.target.value
 									if (value === "settings-action") {
@@ -894,6 +924,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 									role="button"
 									aria-label="enhance prompt"
 									data-testid="enhance-prompt-button"
+									title="Enhance prompt with additional context"
 									className={`input-icon-button ${
 										textAreaDisabled ? "disabled" : ""
 									} codicon codicon-sparkle`}
@@ -906,11 +937,13 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							className={`input-icon-button ${
 								shouldDisableImages ? "disabled" : ""
 							} codicon codicon-device-camera`}
+							title="Add images to message"
 							onClick={() => !shouldDisableImages && onSelectImages()}
 							style={{ fontSize: 16.5 }}
 						/>
 						<span
 							className={`input-icon-button ${textAreaDisabled ? "disabled" : ""} codicon codicon-send`}
+							title="Send message"
 							onClick={() => !textAreaDisabled && onSend()}
 							style={{ fontSize: 15 }}
 						/>

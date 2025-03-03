@@ -52,7 +52,7 @@ export interface WebviewMessage {
 		| "soundEnabled"
 		| "soundVolume"
 		| "diffEnabled"
-		| "checkpointsEnabled"
+		| "enableCheckpoints"
 		| "browserViewportSize"
 		| "screenshotQuality"
 		| "openMcpSettings"
@@ -94,6 +94,7 @@ export interface WebviewMessage {
 		| "checkpointRestore"
 		| "deleteMcpServer"
 		| "maxOpenTabsContext"
+		| "browserToolEnabled"
 	text?: string
 	disabled?: boolean
 	askResponse?: ClineAskResponse

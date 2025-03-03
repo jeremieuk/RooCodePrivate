@@ -498,7 +498,7 @@ const ApiOptions = ({
 								/>
 							)}
 							<Checkbox
-								checked={apiConfiguration?.openRouterUseMiddleOutTransform || false}
+								checked={apiConfiguration?.openRouterUseMiddleOutTransform ?? true}
 								onChange={handleInputChange("openRouterUseMiddleOutTransform", noTransform)}>
 								Compress prompts and message chains to the context size (
 								<a href="https://openrouter.ai/docs/transforms">OpenRouter Transforms</a>)
@@ -1380,6 +1380,7 @@ const ApiOptions = ({
 						/>
 					</div>
 					<ThinkingBudget
+						key={`${selectedProvider}-${selectedModelId}`}
 						apiConfiguration={apiConfiguration}
 						setApiConfigurationField={setApiConfigurationField}
 						modelInfo={selectedModelInfo}
